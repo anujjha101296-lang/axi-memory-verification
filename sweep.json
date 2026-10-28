@@ -1,0 +1,168 @@
+{
+ "names": {
+  "0": "clean",
+  "1": "strobes ignored",
+  "2": "FIXED treated as INCR",
+  "3": "RLAST one beat early",
+  "4": "last write beat dropped",
+  "5": "OOR write not flagged",
+  "6": "read data advances during stall",
+  "7": "INCR wraps at 256B",
+  "8": "WRAP burst not flagged"
+ },
+ "res": {
+  "0": {
+   "directed": {
+    "detected": false,
+    "cov": 54.2
+   },
+   "random": {
+    "seeds_detected": 0,
+    "of": 5,
+    "first_n_per_seed": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   }
+  },
+  "1": {
+   "directed": {
+    "detected": true,
+    "cov": 54.2
+   },
+   "random": {
+    "seeds_detected": 5,
+    "of": 5,
+    "first_n_per_seed": [
+     10,
+     25,
+     50,
+     10,
+     25
+    ]
+   }
+  },
+  "2": {
+   "directed": {
+    "detected": true,
+    "cov": 54.2
+   },
+   "random": {
+    "seeds_detected": 5,
+    "of": 5,
+    "first_n_per_seed": [
+     10,
+     50,
+     25,
+     50,
+     10
+    ]
+   }
+  },
+  "3": {
+   "directed": {
+    "detected": true,
+    "cov": 27.1
+   },
+   "random": {
+    "seeds_detected": 5,
+    "of": 5,
+    "first_n_per_seed": [
+     10,
+     10,
+     10,
+     10,
+     10
+    ]
+   }
+  },
+  "4": {
+   "directed": {
+    "detected": true,
+    "cov": 54.2
+   },
+   "random": {
+    "seeds_detected": 5,
+    "of": 5,
+    "first_n_per_seed": [
+     10,
+     10,
+     10,
+     50,
+     10
+    ]
+   }
+  },
+  "5": {
+   "directed": {
+    "detected": true,
+    "cov": 54.2
+   },
+   "random": {
+    "seeds_detected": 5,
+    "of": 5,
+    "first_n_per_seed": [
+     10,
+     50,
+     25,
+     25,
+     10
+    ]
+   }
+  },
+  "6": {
+   "directed": {
+    "detected": false,
+    "cov": 54.2
+   },
+   "random": {
+    "seeds_detected": 5,
+    "of": 5,
+    "first_n_per_seed": [
+     50,
+     10,
+     10,
+     25,
+     50
+    ]
+   }
+  },
+  "7": {
+   "directed": {
+    "detected": false,
+    "cov": 54.2
+   },
+   "random": {
+    "seeds_detected": 5,
+    "of": 5,
+    "first_n_per_seed": [
+     200,
+     25,
+     10,
+     100,
+     200
+    ]
+   }
+  },
+  "8": {
+   "directed": {
+    "detected": true,
+    "cov": 54.2
+   },
+   "random": {
+    "seeds_detected": 5,
+    "of": 5,
+    "first_n_per_seed": [
+     10,
+     100,
+     50,
+     10,
+     25
+    ]
+   }
+  }
+ }
+}
