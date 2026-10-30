@@ -19,10 +19,10 @@ package axi_pkg;
     bit is_wr; bit [3:0] id; bit [31:0] addr; int len; burst_e burst;
     bit [31:0] data[$]; bit [3:0] strb[$];
     // observed (filled by monitor)
-    bit [1:0] resp; bit [3:0] obs_id; bit [31:0] rdata[$]; bit [1:0] rresp[$]; int rlast_at; int nbeats;
+    bit [1:0] resp; bit [3:0] obs_id; bit [31:0] rdata[$]; bit [1:0] rresp[$]; int rlast_at; int wlast_at; int nbeats;
     // stimulus-side stall counters (filled by driver)
     int rstall, bstall, wgap, awdelay;
-    function new(); rlast_at = -1; endfunction
+    function new(); rlast_at = -1; wlast_at = -1; endfunction
     function bit exp_err();
       if (burst == WRAP) return 1;
       if (addr >= 1024) return 1;
@@ -202,7 +202,12 @@ package axi_pkg;
         end
         if (vif.wvalid && vif.wready) begin
           if (!w_active) perr("W_WITHOUT_AW");
-          else begin wt.data.push_back(vif.wdata); wt.strb.push_back(vif.wstrb); wt.nbeats++; if (vif.wlast) wlast_seen = 1; end
+          else begin wt.data.push_back(vif.wdata); wt.strb.push_back(vif.wstrb); wt.nbeats++;
+            if (vif.wlast) begin
+              if (wt.wlast_at < 0) wt.wlast_at = wt.nbeats - 1;
+              else perr("MULTIPLE_WLAST");
+              wlast_seen = 1;
+            end end
         end
         if (vif.bvalid && !wlast_seen) perr("B_BEFORE_WLAST");
         if (vif.bvalid && vif.bready && w_active) begin
@@ -244,6 +249,12 @@ package axi_pkg;
         if (o.obs_id !== e.id) bad("ID_MISMATCH", $sformatf("exp %0d got %0d", e.id, o.obs_id));
         if (e.is_wr) begin
           if (o.nbeats != e.len + 1) bad("W_BEATS", $sformatf("exp %0d got %0d", e.len + 1, o.nbeats));
+          if (o.wlast_at != e.len) bad("WLAST_POS", $sformatf("exp %0d got %0d", e.len, o.wlast_at));
+          if (o.data.size() != e.data.size()) bad("W_DATA_COUNT", $sformatf("exp %0d got %0d", e.data.size(), o.data.size()));
+          for (int k = 0; k < e.data.size() && k < o.data.size(); k++) begin
+            if (o.data[k] !== e.data[k]) bad("W_DATA", $sformatf("beat %0d exp %h got %h", k, e.data[k], o.data[k]));
+            if (o.strb[k] !== e.strb[k]) bad("W_STRB", $sformatf("beat %0d exp %h got %h", k, e.strb[k], o.strb[k]));
+          end
           if (o.resp != (e.exp_err() ? 2'b10 : 2'b00)) bad("WR_RESP", $sformatf("addr=%h len=%0d burst=%s exp %0d got %0d", e.addr, e.len, e.burst.name(), e.exp_err() ? 2 : 0, o.resp));
           if (!e.exp_err()) for (int k = 0; k <= e.len; k++) begin
             w = (e.beat_addr(k) & 32'h3FF) >> 2; ref_mem[w] = merge(ref_mem[w], e.data[k], e.strb[k]); written[w] = 1;
