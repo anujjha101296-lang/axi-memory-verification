@@ -1,0 +1,24 @@
+name: AXI4 Verification CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verilator-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator
+          verilator --version
+      - name: Build testbench
+        run: verilator --binary --timing -Wno-fatal -Wno-lint -Wno-style --top-module tb_top -Mdir obj axi_mem.v tb_axi.sv
+      - name: Directed clean-DUT run
+        run: ./obj/Vtb_top +MODE=directed +N=15 +SEED=1 +BUG=0
+      - name: Random clean-DUT run
+        run: ./obj/Vtb_top +MODE=random +N=500 +SEED=1 +BUG=0
