@@ -48,8 +48,10 @@ jobs:
                   m = re.search(r"SUMMARY .*sb_errors=(\d+) proto_errors=(\d+) hang=(\d+)", p.stdout)
                   assert m, f"BUG{bug}: missing SUMMARY"
                   sb, proto, hang = map(int, m.groups())
-                  assert hang == 0, f"BUG{bug} seed={seed}: testbench hung"
-                  if sb > 0 or proto > 0:
+                  # A DUT defect that corrupts RLAST can intentionally make the
+                  # driver/scoreboard fail to complete. A watchdog hang is itself
+                  # a valid mutation detection, not a clean pass.
+                  if sb > 0 or proto > 0 or hang > 0:
                       detected = True
                       break
               assert detected, f"Checker failed to detect injected BUG{bug} on seeds 1,2,3"
