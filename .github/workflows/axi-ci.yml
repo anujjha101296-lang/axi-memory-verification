@@ -18,7 +18,40 @@ jobs:
           verilator --version
       - name: Build testbench
         run: verilator --binary --timing -Wno-fatal -Wno-lint -Wno-style --top-module tb_top -Mdir obj axi_mem.v tb_axi.sv
-      - name: Directed clean-DUT run
-        run: ./obj/Vtb_top +MODE=directed +N=15 +SEED=1 +BUG=0
-      - name: Random clean-DUT run
-        run: ./obj/Vtb_top +MODE=random +N=500 +SEED=1 +BUG=0
+      - name: Check clean DUT and scoreboard
+        run: |
+          python - <<'PY'
+          import re, subprocess
+          for mode, n, expected in [("directed", 15, 15), ("random", 500, 500)]:
+              p = subprocess.run(["./obj/Vtb_top", f"+MODE={mode}", f"+N={n}",
+                                  "+SEED=1", "+BUG=0"], text=True,
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
+              print(p.stdout)
+              m = re.search(r"SUMMARY .*txns=(\d+) checked=(\d+) sb_errors=(\d+) proto_errors=(\d+) hang=(\d+)", p.stdout)
+              assert m, "Missing testbench SUMMARY"
+              txns, checked, sb, proto, hang = map(int, m.groups())
+              assert txns == expected and checked == expected, (mode, m.groups())
+              assert sb == 0 and proto == 0 and hang == 0, (mode, m.groups())
+          PY
+      - name: Mutation test — checker must detect injected DUT defects
+        run: |
+          python - <<'PY'
+          import re, subprocess
+          for bug in range(1, 9):
+              detected = False
+              for seed in (1, 2, 3):
+                  p = subprocess.run(["./obj/Vtb_top", "+MODE=random", "+N=500",
+                                      f"+SEED={seed}", f"+BUG={bug}"],
+                                     text=True, stdout=subprocess.PIPE,
+                                     stderr=subprocess.STDOUT, check=True)
+                  print(p.stdout)
+                  m = re.search(r"SUMMARY .*sb_errors=(\d+) proto_errors=(\d+) hang=(\d+)", p.stdout)
+                  assert m, f"BUG{bug}: missing SUMMARY"
+                  sb, proto, hang = map(int, m.groups())
+                  assert hang == 0, f"BUG{bug} seed={seed}: testbench hung"
+                  if sb > 0 or proto > 0:
+                      detected = True
+                      break
+              assert detected, f"Checker failed to detect injected BUG{bug} on seeds 1,2,3"
+              print(f"BUG{bug}: detected")
+          PY
